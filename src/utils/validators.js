@@ -41,4 +41,32 @@ function validateContact(req, res, next) {
   next();
 }
 
-module.exports = { validateContact };
+function validateContactUpdate(req, res, next) {
+  const { name, phone, email } = req.body;
+  const errors = [];
+
+  // برای update همه فیلدها اختیاری هستند
+  if (name !== undefined && !isValidName(name)) {
+    errors.push("نام باید بین ۲ تا ۵۰ کاراکتر باشد");
+  }
+
+  if (phone !== undefined && !isValidPhone(phone)) {
+    errors.push("فرمت شماره تلفن نامعتبر است");
+  }
+
+  if (email !== undefined && email !== null && !isValidEmail(email)) {
+    errors.push("فرمت ایمیل نامعتبر است");
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: "خطا در اعتبارسنجی داده‌ها",
+      errors,
+    });
+  }
+
+  next();
+}
+
+module.exports = { validateContact, validateContactUpdate };
