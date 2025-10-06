@@ -13,21 +13,58 @@ const createContact = async (req, res, next) => {
 
 const getContacts = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+      dateFrom,
+      dateTo,
+    } = req.query;
+
     const skip =
       (Math.max(1, parseInt(page, 10)) - 1) * Math.max(1, parseInt(limit, 10));
     const filter = {};
 
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    if (dateFrom || dateTo) {
+      filter.createdAt = {};
+      if (dateFrom) {
+        filter.createdAt.$gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        filter.createdAt.$lte = new Date(dateTo);
+      }
+    }
+
+    const sortConfig = {};
+    sortConfig[sortBy] = sortOrder === "asc" ? 1 : -1;
+
     const total = await Contact.countDocuments(filter);
     const data = await Contact.find(filter)
-      .sort({ createdAt: -1 })
+      .sort(sortConfig)
       .skip(skip)
       .limit(Number(limit))
       .lean();
 
     res.json({
       success: true,
-      meta: { total, page: Number(page), limit: Number(limit) },
+      meta: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(total / Number(limit)),
+        hasNext: skip + Number(limit) < total,
+        hasPrev: Number(page) > 1,
+      },
       data,
     });
   } catch (err) {
@@ -99,10 +136,62 @@ const deleteContact = async (req, res, next) => {
   }
 };
 
+const searchContacts = async (req, res, next) => {
+  try {
+    const { q, name, phone, email, page = 1, limit = 10 } = req.query;
+
+    const skip =
+      (Math.max(1, parseInt(page, 10)) - 1) * Math.max(1, parseInt(limit, 10));
+    const filter = {};
+
+    if (q) {
+      filter.$or = [
+        { name: { $regex: q, $options: "i" } },
+        { phone: { $regex: q, $options: "i" } },
+        { email: { $regex: q, $options: "i" } },
+      ];
+    }
+
+    if (name) {
+      filter.name = { $regex: name, $options: "i" };
+    }
+
+    if (phone) {
+      filter.phone = { $regex: phone, $options: "i" };
+    }
+
+    if (email) {
+      filter.email = { $regex: email, $options: "i" };
+    }
+
+    const total = await Contact.countDocuments(filter);
+    const data = await Contact.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit))
+      .lean();
+
+    res.json({
+      success: true,
+      message: `${total} مخاطب یافت شد`,
+      meta: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(total / Number(limit)),
+      },
+      data,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createContact,
   getContacts,
   getContactById,
   updateContact,
   deleteContact,
+  searchContacts,
 };
