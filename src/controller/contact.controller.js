@@ -47,7 +47,7 @@ const getContactById = async (req, res, next) => {
     if (!contact)
       return res
         .status(404)
-        .json({ success: false, message: "Contact not found" });
+        .json({ success: false, message: "اطلاعات یافت نشد" });
 
     res.json({ success: true, data: contact });
   } catch (err) {
