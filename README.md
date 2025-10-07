@@ -77,7 +77,7 @@ http://localhost:3000
 ### POST /api/contacts
 ```json
 {
-  "name": "علی رضایی",
+  "name": "تست",
   "phone": "09123456789",
   "email": "ali@gmail.com"
 }
@@ -87,7 +87,7 @@ http://localhost:3000
 ```json
 {
   "_id": "652b8e8f76b2a85b3c18b9aa",
-  "name": "علی رضایی",
+  "name": "تست",
   "phone": "09123456789",
   "email": "ali@gmail.com"
 }
